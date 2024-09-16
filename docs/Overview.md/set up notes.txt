@@ -1,1 +1,3 @@
 git hub named health_com_poc  -- proof of concept
+database  health_com_poc in database localJa
+user i beleive is postgres
