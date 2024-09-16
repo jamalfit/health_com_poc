@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Location {
+  id             String           @id @default(dbgenerated("public.uuid_generate_v4()")) @db.Uuid
+  name           String           @unique
+  description    String?
+  beaconId       String           @unique
+  LocationBeacon LocationBeacon[]
+  Message        Message[]
+  StaffLocation  StaffLocation[]
+  Tablet         Tablet[]
+}
+
+model LocationBeacon {
+  id         String    @id @default(dbgenerated("public.uuid_generate_v4()")) @db.Uuid
+  beaconId   String    @unique
+  locationId String    @db.Uuid
+  lastSeen   DateTime? @default(now()) @db.Timestamptz(6)
+  Location   Location  @relation(fields: [locationId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model Message {
+  id                                    String    @id @default(dbgenerated("public.uuid_generate_v4()")) @db.Uuid
+  content                               String
+  senderId                              String    @db.Uuid
+  locationId                            String    @db.Uuid
+  timestamp                             DateTime? @default(now()) @db.Timestamptz(6)
+  acknowledged                          Boolean?  @default(false)
+  acknowledgedAt                        DateTime? @db.Timestamptz(6)
+  acknowledgedById                      String?   @db.Uuid
+  Staff_Message_acknowledgedByIdToStaff Staff?    @relation("Message_acknowledgedByIdToStaff", fields: [acknowledgedById], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  Location                              Location  @relation(fields: [locationId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  Staff_Message_senderIdToStaff         Staff     @relation("Message_senderIdToStaff", fields: [senderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model Staff {
+  id                                      String         @id @default(dbgenerated("public.uuid_generate_v4()")) @db.Uuid
+  name                                    String
+  role                                    String
+  wearableId                              String         @unique
+  Message_Message_acknowledgedByIdToStaff Message[]      @relation("Message_acknowledgedByIdToStaff")
+  Message_Message_senderIdToStaff         Message[]      @relation("Message_senderIdToStaff")
+  StaffLocation                           StaffLocation?
+  Wearable                                Wearable?
+}
+
+model StaffLocation {
+  staffId     String    @id @db.Uuid
+  locationId  String    @db.Uuid
+  lastUpdated DateTime? @default(now()) @db.Timestamptz(6)
+  Location    Location  @relation(fields: [locationId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  Staff       Staff     @relation(fields: [staffId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([locationId])
+}
+
+model Tablet {
+  id         String    @id @default(dbgenerated("public.uuid_generate_v4()")) @db.Uuid
+  deviceName String
+  locationId String    @db.Uuid
+  lastActive DateTime? @default(now()) @db.Timestamptz(6)
+  Location   Location  @relation(fields: [locationId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model Wearable {
+  id           String    @id @default(dbgenerated("public.uuid_generate_v4()")) @db.Uuid
+  deviceId     String    @unique
+  batteryLevel Int
+  lastSeen     DateTime? @default(now()) @db.Timestamptz(6)
+  staffId      String    @unique @db.Uuid
+  Staff        Staff     @relation(fields: [staffId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
