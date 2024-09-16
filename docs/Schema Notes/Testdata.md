@@ -1,82 +1,56 @@
--- Set the search path to use the healthcare_messaging schema
-SET search_path TO healthcare_messaging, public;
+-- Use the healthcare_messaging schema
+SET search_path TO healthcare_messaging;
 
--- Insert sample data into Staff table
-INSERT INTO "Staff" ("name", "role", "wearableId") VALUES
-('Dr. John Smith', 'Physician', 'W001'),
-('Nurse Sarah Johnson', 'Nurse', 'W002'),
-('Dr. Emily Brown', 'Surgeon', 'W003'),
-('James Wilson', 'Technician', 'W004'),
-('Nurse Mary Davis', 'Nurse', 'W005');
+-- Step 1: Clear existing records from tables
+TRUNCATE TABLE healthcare_messaging."StaffLocation" CASCADE;
+TRUNCATE TABLE healthcare_messaging."Message" CASCADE;
+TRUNCATE TABLE healthcare_messaging."Location" CASCADE;
+TRUNCATE TABLE healthcare_messaging."Staff" CASCADE;
 
--- Insert sample data into Location table
-INSERT INTO "Location" ("name", "description", "beaconId") VALUES
-('Emergency Room', 'For immediate care', 'B001'),
-('Operating Room 1', 'Main surgery room', 'B002'),
-('ICU', 'Intensive Care Unit', 'B003'),
-('Radiology', 'Imaging department', 'B004'),
-('Pharmacy', 'Medication dispensary', 'B005');
+-- Step 2: Insert sample staff records
+-- Explicitly quoting column names to avoid case sensitivity issues
+INSERT INTO healthcare_messaging."Staff" (id, name, role, "wearableId")
+VALUES
+  (gen_random_uuid(), 'Dr. Alice Johnson', 'Doctor', 'wearable-001'),
+  (gen_random_uuid(), 'Nurse Bob Smith', 'Nurse', 'wearable-002'),
+  (gen_random_uuid(), 'Dr. Carol Williams', 'Doctor', 'wearable-003'),
+  (gen_random_uuid(), 'Technician Dave Brown', 'Technician', 'wearable-004');
 
--- Insert sample data into Message table
-INSERT INTO "Message" ("content", "senderId", "locationId", "acknowledged", "acknowledgedById")
-SELECT 
-    'Sample message ' || generate_series,
-    (SELECT "id" FROM "Staff" ORDER BY RANDOM() LIMIT 1),
-    (SELECT "id" FROM "Location" ORDER BY RANDOM() LIMIT 1),
-    CASE WHEN RANDOM() < 0.5 THEN TRUE ELSE FALSE END,
-    CASE WHEN RANDOM() < 0.5 THEN (SELECT "id" FROM "Staff" ORDER BY RANDOM() LIMIT 1) ELSE NULL END
-FROM generate_series(1, 5);
+-- Step 3: Insert sample location records
+INSERT INTO healthcare_messaging."Location" (id, name, description, "beaconId")
+VALUES
+  (gen_random_uuid(), 'Operating Room 1', 'Main operating room', 'beacon-001'),
+  (gen_random_uuid(), 'Nurses Station', 'Central nurses station', 'beacon-002'),
+  (gen_random_uuid(), 'Emergency Room', 'Emergency treatment area', 'beacon-003'),
+  (gen_random_uuid(), 'Laboratory', 'Medical testing lab', 'beacon-004');
 
--- Insert sample data into StaffLocation table
-INSERT INTO "StaffLocation" ("staffId", "locationId")
-SELECT 
-    "id" AS "staffId",
-    (SELECT "id" FROM "Location" ORDER BY RANDOM() LIMIT 1) AS "locationId"
-FROM "Staff";
+-- Step 4: Insert sample message records
+-- Correctly referencing "wearableId" and "beaconId"
+INSERT INTO healthcare_messaging."Message" (id, content, "senderId", "locationId", timestamp, acknowledged)
+VALUES
+  (gen_random_uuid(), 'Patient is ready for surgery.', 
+    (SELECT id FROM healthcare_messaging."Staff" WHERE "wearableId" = 'wearable-001'),
+    (SELECT id FROM healthcare_messaging."Location" WHERE "beaconId" = 'beacon-001'), 
+    CURRENT_TIMESTAMP, false),
+  (gen_random_uuid(), 'Need assistance in ER.', 
+    (SELECT id FROM healthcare_messaging."Staff" WHERE "wearableId" = 'wearable-002'),
+    (SELECT id FROM healthcare_messaging."Location" WHERE "beaconId" = 'beacon-003'), 
+    CURRENT_TIMESTAMP, false),
+  (gen_random_uuid(), 'Lab results are available.', 
+    (SELECT id FROM healthcare_messaging."Staff" WHERE "wearableId" = 'wearable-004'),
+    (SELECT id FROM healthcare_messaging."Location" WHERE "beaconId" = 'beacon-004'), 
+    CURRENT_TIMESTAMP, true);
 
--- Insert sample data into Wearable table
-INSERT INTO "Wearable" ("deviceId", "batteryLevel", "staffId")
-SELECT 
-    'D00' || generate_series,
-    floor(random() * 100 + 1)::int,
-    "id"
-FROM "Staff"
-JOIN generate_series(1, 5) ON TRUE;
-
--- Insert sample data into Tablet table
-INSERT INTO "Tablet" ("deviceName", "locationId")
-SELECT 
-    'Tablet ' || generate_series,
-    "id"
-FROM "Location"
-JOIN generate_series(1, 5) ON TRUE;
-
--- Insert sample data into LocationBeacon table
-INSERT INTO "LocationBeacon" ("beaconId", "locationId")
-SELECT 
-    'LB00' || generate_series,
-    "id"
-FROM "Location"
-JOIN generate_series(1, 5) ON TRUE;
-
--- Reset search path to default
-SET search_path TO "$user", public;
-
--- Verify the inserted data
-SET search_path TO healthcare_messaging, public;
-
-SELECT 'Staff' AS table_name, COUNT(*) AS record_count FROM "Staff"
-UNION ALL
-SELECT 'Location' AS table_name, COUNT(*) AS record_count FROM "Location"
-UNION ALL
-SELECT 'Message' AS table_name, COUNT(*) AS record_count FROM "Message"
-UNION ALL
-SELECT 'StaffLocation' AS table_name, COUNT(*) AS record_count FROM "StaffLocation"
-UNION ALL
-SELECT 'Wearable' AS table_name, COUNT(*) AS record_count FROM "Wearable"
-UNION ALL
-SELECT 'Tablet' AS table_name, COUNT(*) AS record_count FROM "Tablet"
-UNION ALL
-SELECT 'LocationBeacon' AS table_name, COUNT(*) AS record_count FROM "LocationBeacon";
-
-SET search_path TO "$user", public;
+-- Step 5: Insert sample staff location records
+-- Correctly referencing "wearableId" and "beaconId"
+INSERT INTO healthcare_messaging."StaffLocation" ("staffId", "locationId", "lastUpdated")
+VALUES
+  ((SELECT id FROM healthcare_messaging."Staff" WHERE "wearableId" = 'wearable-001'),
+   (SELECT id FROM healthcare_messaging."Location" WHERE "beaconId" = 'beacon-001'), 
+   CURRENT_TIMESTAMP),
+  ((SELECT id FROM healthcare_messaging."Staff" WHERE "wearableId" = 'wearable-002'),
+   (SELECT id FROM healthcare_messaging."Location" WHERE "beaconId" = 'beacon-003'), 
+   CURRENT_TIMESTAMP),
+  ((SELECT id FROM healthcare_messaging."Staff" WHERE "wearableId" = 'wearable-004'),
+   (SELECT id FROM healthcare_messaging."Location" WHERE "beaconId" = 'beacon-004'), 
+   CURRENT_TIMESTAMP);
