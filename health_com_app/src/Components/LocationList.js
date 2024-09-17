@@ -1,5 +1,6 @@
 import React from 'react';
 import { useQuery, gql } from '@apollo/client';
+import './Locations.css';  // Import the CSS file
 
 const GET_LOCATIONS = gql`
   query GetLocations {
@@ -15,16 +16,16 @@ const GET_LOCATIONS = gql`
 function LocationList() {
   const { loading, error, data } = useQuery(GET_LOCATIONS);
 
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p>Error: {error.message}</p>;
+  if (loading) return <p className="loading">Loading...</p>;
+  if (error) return <p className="error">Error: {error.message}</p>;
 
   return (
-    <div>
+    <div className="location-list">
       {data.allLocations.map(({ id, name, description, beaconId }) => (
-        <div key={id} style={{ marginBottom: '20px', padding: '10px', border: '1px solid #ddd' }}>
+        <div key={id} className="location-card">
           <h2>{name}</h2>
           <p>{description}</p>
-          <p>Beacon ID: {beaconId}</p>
+          <p className="beacon-id">Beacon ID: {beaconId}</p>
         </div>
       ))}
     </div>

@@ -1,0 +1,60 @@
+.location-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+    padding: 20px;
+  }
+  
+  .location-card {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    width: 300px;
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+  }
+  
+  .location-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  .location-card h2 {
+    color: #333;
+    font-size: 1.5em;
+    margin-bottom: 10px;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 10px;
+  }
+  
+  .location-card p {
+    color: #666;
+    font-size: 1em;
+    margin-bottom: 5px;
+    line-height: 1.4;
+  }
+  
+  .location-card .beacon-id {
+    color: #888;
+    font-size: 0.9em;
+    font-style: italic;
+    margin-top: 10px;
+    border-top: 1px solid #f0f0f0;
+    padding-top: 10px;
+  }
+  
+  .loading, .error {
+    text-align: center;
+    font-size: 1.2em;
+    color: #666;
+    margin-top: 50px;
+    padding: 20px;
+    background-color: #f8f8f8;
+    border-radius: 8px;
+  }
+  
+  .error {
+    color: #d32f2f;
+    border: 1px solid #ffa000;
+  }
