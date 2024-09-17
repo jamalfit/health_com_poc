@@ -1,178 +1,69 @@
 const { PrismaClient } = require('@prisma/client');
+
 const prisma = new PrismaClient();
 
 const resolvers = {
   Query: {
-    // Staff queries
-    staff: async (_, { id }) => {
-      return prisma.staff.findUnique({ where: { id } });
-    },
-    allStaff: async () => {
-      return prisma.staff.findMany();
-    },
-
-    // Location queries
-    location: async (_, { id }) => {
-      return prisma.location.findUnique({ where: { id } });
-    },
-    allLocations: async () => {
-      return prisma.location.findMany();
-    },
-
-    // Message queries
-    message: async (_, { id }) => {
-      return prisma.message.findUnique({ where: { id } });
-    },
-    allMessages: async () => {
-      return prisma.message.findMany();
-    },
-
-    // StaffLocation queries
-    staffLocation: async (_, { staffId }) => {
-      return prisma.staffLocation.findUnique({ where: { staffId } });
-    },
-    allStaffLocations: async () => {
-      return prisma.staffLocation.findMany();
-    },
-
-    // Wearable queries
-    wearable: async (_, { id }) => {
-      return prisma.wearable.findUnique({ where: { id } });
-    },
-    allWearables: async () => {
-      return prisma.wearable.findMany();
-    },
-
-    // Tablet queries
-    tablet: async (_, { id }) => {
-      return prisma.tablet.findUnique({ where: { id } });
-    },
-    allTablets: async () => {
-      return prisma.tablet.findMany();
-    },
-
-    // LocationBeacon queries
-    locationBeacon: async (_, { id }) => {
-      return prisma.locationBeacon.findUnique({ where: { id } });
-    },
-    allLocationBeacons: async () => {
-      return prisma.locationBeacon.findMany();
-    },
+    allStaff: () => prisma.staff.findMany(),
+    allLocations: () => prisma.location.findMany(),
+    allMessages: () => prisma.message.findMany(),
+    staffById: (_, { id }) => prisma.staff.findUnique({ where: { id } }),
+    locationById: (_, { id }) => prisma.location.findUnique({ where: { id } }),
+    messageById: (_, { id }) => prisma.message.findUnique({ where: { id } }),
   },
-
   Mutation: {
-    // Staff mutations
-    createStaff: async (_, { name, role, wearableId }) => {
-      return prisma.staff.create({
-        data: { name, role, wearableId },
-      });
-    },
-    updateStaff: async (_, { id, name, role, wearableId }) => {
-      return prisma.staff.update({
-        where: { id },
-        data: { name, role, wearableId },
-      });
-    },
-    deleteStaff: async (_, { id }) => {
-      return prisma.staff.delete({ where: { id } });
-    },
-
-    // Location mutations
-    createLocation: async (_, { name, description, beaconId }) => {
-      return prisma.location.create({
-        data: { name, description, beaconId },
-      });
-    },
-    updateLocation: async (_, { id, name, description, beaconId }) => {
-      return prisma.location.update({
-        where: { id },
-        data: { name, description, beaconId },
-      });
-    },
-    deleteLocation: async (_, { id }) => {
-      return prisma.location.delete({ where: { id } });
-    },
-
-    // Message mutations
-    createMessage: async (_, { content, senderId, locationId }) => {
-      return prisma.message.create({
-        data: { content, senderId, locationId },
-      });
-    },
-    updateMessage: async (_, { id, content, acknowledged, acknowledgedById }) => {
-      return prisma.message.update({
-        where: { id },
-        data: { 
-          content, 
-          acknowledged, 
-          acknowledgedById,
-          acknowledgedAt: acknowledged ? new Date() : null
-        },
-      });
-    },
-    deleteMessage: async (_, { id }) => {
-      return prisma.message.delete({ where: { id } });
-    },
-
-    // StaffLocation mutations
-    updateStaffLocation: async (_, { staffId, locationId }) => {
-      return prisma.staffLocation.upsert({
-        where: { staffId },
-        update: { locationId, lastUpdated: new Date() },
-        create: { staffId, locationId },
-      });
-    },
-    deleteStaffLocation: async (_, { staffId }) => {
-      return prisma.staffLocation.delete({ where: { staffId } });
-    },
-
-    // Wearable mutations
-    createWearable: async (_, { deviceId, batteryLevel, staffId }) => {
-      return prisma.wearable.create({
-        data: { deviceId, batteryLevel, staffId },
-      });
-    },
-    updateWearable: async (_, { id, deviceId, batteryLevel, staffId }) => {
-      return prisma.wearable.update({
-        where: { id },
-        data: { deviceId, batteryLevel, staffId },
-      });
-    },
-    deleteWearable: async (_, { id }) => {
-      return prisma.wearable.delete({ where: { id } });
-    },
-
-    // Tablet mutations
-    createTablet: async (_, { deviceName, locationId }) => {
-      return prisma.tablet.create({
-        data: { deviceName, locationId },
-      });
-    },
-    updateTablet: async (_, { id, deviceName, locationId }) => {
-      return prisma.tablet.update({
-        where: { id },
-        data: { deviceName, locationId },
-      });
-    },
-    deleteTablet: async (_, { id }) => {
-      return prisma.tablet.delete({ where: { id } });
-    },
-
-    // LocationBeacon mutations
-    createLocationBeacon: async (_, { beaconId, locationId }) => {
-      return prisma.locationBeacon.create({
-        data: { beaconId, locationId },
-      });
-    },
-    updateLocationBeacon: async (_, { id, beaconId, locationId }) => {
-      return prisma.locationBeacon.update({
-        where: { id },
-        data: { beaconId, locationId },
-      });
-    },
-    deleteLocationBeacon: async (_, { id }) => {
-      return prisma.locationBeacon.delete({ where: { id } });
-    },
+    createStaff: (_, args) => prisma.staff.create({ data: args }),
+    createLocation: (_, args) => prisma.location.create({ data: args }),
+    createMessage: (_, args) => prisma.message.create({ 
+      data: { 
+        content: args.content,
+        sender: { connect: { id: args.senderId } },
+        location: { connect: { id: args.locationId } },
+      } 
+    }),
+    acknowledgeMessage: (_, { messageId, staffId }) => prisma.message.update({
+      where: { id: messageId },
+      data: { 
+        acknowledged: true, 
+        acknowledgedAt: new Date(),
+        acknowledgedBy: { connect: { id: staffId } }
+      }
+    }),
+    updateStaffLocation: (_, { staffId, locationId }) => prisma.staffLocation.upsert({
+      where: { staffId },
+      update: { locationId, lastUpdated: new Date() },
+      create: { staffId, locationId }
+    }),
+  },
+  Staff: {
+    messages: (parent) => prisma.message.findMany({ where: { senderId: parent.id } }),
+    acknowledgedMessages: (parent) => prisma.message.findMany({ where: { acknowledgedById: parent.id } }),
+    location: (parent) => prisma.staffLocation.findUnique({ where: { staffId: parent.id } }),
+    wearable: (parent) => prisma.wearable.findUnique({ where: { staffId: parent.id } }),
+  },
+  Location: {
+    messages: (parent) => prisma.message.findMany({ where: { locationId: parent.id } }),
+    staff: (parent) => prisma.staffLocation.findMany({ where: { locationId: parent.id } }),
+    tablets: (parent) => prisma.tablet.findMany({ where: { locationId: parent.id } }),
+    beacons: (parent) => prisma.locationBeacon.findMany({ where: { locationId: parent.id } }),
+  },
+  Message: {
+    sender: (parent) => prisma.staff.findUnique({ where: { id: parent.senderId } }),
+    location: (parent) => prisma.location.findUnique({ where: { id: parent.locationId } }),
+    acknowledgedBy: (parent) => parent.acknowledgedById ? prisma.staff.findUnique({ where: { id: parent.acknowledgedById } }) : null,
+  },
+  StaffLocation: {
+    staff: (parent) => prisma.staff.findUnique({ where: { id: parent.staffId } }),
+    location: (parent) => prisma.location.findUnique({ where: { id: parent.locationId } }),
+  },
+  Wearable: {
+    staff: (parent) => prisma.staff.findUnique({ where: { id: parent.staffId } }),
+  },
+  Tablet: {
+    location: (parent) => prisma.location.findUnique({ where: { id: parent.locationId } }),
+  },
+  LocationBeacon: {
+    location: (parent) => prisma.location.findUnique({ where: { id: parent.locationId } }),
   },
 };
 
