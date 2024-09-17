@@ -5,7 +5,7 @@ import LocationList from './Components/LocationList';
 
 // Create the Apollo Client instance
 const client = new ApolloClient({
-  uri: 'http://localhost:4000/graphql', // Make sure this matches your server's URL
+  uri: 'http://192.168.2.136:4000/graphql', /// This may change/ Make sure this matches your server's URL
   cache: new InMemoryCache()
 });
 
